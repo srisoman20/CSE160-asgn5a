@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My 3D Scene</title>
+    <style>
+      body {
+        margin: 0;
+      }
+      canvas {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="c"  width="900" height="500"></canvas>
+    <script type="module">
+      import * as THREE from "three";
+      import { OBJLoader } from "three/examples/jsm/loaders/OBJLoader.js";
+      import {MTLLoader} from 'three/examples/jsm/loaders/MTLLoader.js';
+      import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+      
+
+      function main() {
+        const canvas = document.querySelector("#c");
+        const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
+        const fov = 75;
+        const aspect = 2;
+        const near = 0.1;
+        const far = 100;
+        const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+        camera.position.z = 15;
+
+        const scene = new THREE.Scene();
+
+        // Load Custom OBJ Model
+        // Cheeseburger/Hamburger.obj
+
+        const mtlLoader = new MTLLoader();
+        mtlLoader.load('Hamburger.mtl', (mtl) => {
+          mtl.preload();
+
+          const objLoader = new OBJLoader();
+          objLoader.setMaterials(mtl);
+          objLoader.load('Hamburger.obj', (root) => {
+            // Apply red material to all meshes in the loaded object
+            root.traverse((child) => {
+            if (child.isMesh) {
+              const redMaterial = new THREE.MeshPhongMaterial({
+                 color: 0xFFFF00
+            });
+            child.material = redMaterial;
+          }
+        });
+        scene.add(root);
+
+       });
+      });
+
+
+            
+        const boxWidth = 1;
+        const boxHeight = 1;
+        const boxDepth = 1;
+        const geometry = new THREE.BoxGeometry(boxWidth, boxHeight, boxDepth);
+
+        // // Load Textures
+        const loader = new THREE.TextureLoader();
+        const texture = loader.load("wall.jpeg");
+
+        // // Apply Texture to Material
+        const material = new THREE.MeshPhongMaterial({ map: texture });
+
+        // Create Cubes with Textured Material
+        function makeInstance(geometry, material, x) {
+          const cube = new THREE.Mesh(geometry, material);
+          scene.add(cube);
+          cube.position.x = x;
+          return cube;
+        }
+
+        const cubes = [
+          makeInstance(geometry, material, 10)
+        ];
+
+        const cylinder_geo = new THREE.CylinderGeometry(1, 4, 5, 50);
+        const cmaterial = new THREE.MeshPhongMaterial({ color: 0x0000ff }); //blue
+        const cylinder = new THREE.Mesh(cylinder_geo, cmaterial);
+        scene.add(cylinder);
+        cylinder.position.x = -10;
+
+        const sphere_geo = new THREE.SphereGeometry(1, 50, 50);
+        const smaterial = new THREE.MeshPhongMaterial({ color: 0xffc2d1 });
+        const sphere = new THREE.Mesh(sphere_geo, smaterial);
+        scene.add(sphere);
+        sphere.position.x = 15;
+        sphere.position.y = 6;
+
+
+        // Add Light
+        const color = 0xffffff;
+        const intensity = 5;
+        const light = new THREE.DirectionalLight(color, intensity);
+        light.position.set(-1, 2, 4);
+        scene.add(light);
+
+        // Render Loop
+        function render(time) {
+          time *= 0.001;
+          cubes.forEach((cube, ndx) => {
+            const speed = 1 + ndx * 0.1;
+            const rot = time * speed;
+            cube.rotation.x = rot;
+            cube.rotation.y = rot;
+          });
+          renderer.render(scene, camera);
+          requestAnimationFrame(render);
+        }
+        requestAnimationFrame(render);
+              
+        const cam = new OrbitControls(camera, canvas);
+        cam.damping = true;
+        cam.dampFactor = 0.5;
+        cam.zoom = true;
+      }
+
+      main();
+    </script>
+  </body>
+</html>
